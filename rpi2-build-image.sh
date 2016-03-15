@@ -236,7 +236,7 @@ EOM
 
 # Unmount mounted filesystems
 umount $R/proc
-umount $R/sys
+umount -l $R/sys
 
 # Clean up files
 rm -f $R/etc/apt/sources.list.save
