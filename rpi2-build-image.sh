@@ -25,10 +25,7 @@ set -x
 RELEASE=trusty
 BASEDIR=/srv/rpi2/${RELEASE}
 BUILDDIR=${BASEDIR}/build
-# I use a local caching proxy to save time/bandwidth; in this mode, the
-# local mirror is used to download almost everything, then the standard
-# http://ports.ubuntu.com/ is replaced at the end for distribution.
-#LOCAL_MIRROR=""
+LOCAL_MIRROR="http://127.0.0.1:3142/ports.ubuntu.com"
 
 # Don't clobber an old build
 if [ -e "$BUILDDIR" ]; then
@@ -42,12 +39,7 @@ R=${BUILDDIR}/chroot
 mkdir -p $R
 
 # Base debootstrap
-apt-get -y install ubuntu-keyring
-if [ -n "$LOCAL_MIRROR" ]; then
-  debootstrap $RELEASE $R $LOCAL_MIRROR
-else
-  debootstrap $RELEASE $R http://ports.ubuntu.com/
-fi
+qemu-debootstrap --arch armhf $RELEASE $R $LOCAL_MIRROR
 
 # Mount required filesystems
 mount -t proc none $R/proc
