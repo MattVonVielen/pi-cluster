@@ -46,8 +46,7 @@ mount -t proc none $R/proc
 mount -t sysfs none $R/sys
 
 # Set up initial sources.list
-if [ -n "$LOCAL_MIRROR" ]; then
-  cat <<EOM >$R/etc/apt/sources.list
+cat <<EOM >$R/etc/apt/sources.list
 deb ${LOCAL_MIRROR} ${RELEASE} main restricted universe multiverse
 # deb-src ${LOCAL_MIRROR} ${RELEASE} main restricted universe multiverse
 
@@ -60,21 +59,6 @@ deb ${LOCAL_MIRROR} ${RELEASE}-security main restricted universe multiverse
 deb ${LOCAL_MIRROR} ${RELEASE}-backports main restricted universe multiverse
 # deb-src ${LOCAL_MIRROR} ${RELEASE}-backports main restricted universe multiverse
 EOM
-else
-  cat <<EOM >$R/etc/apt/sources.list
-deb http://ports.ubuntu.com/ ${RELEASE} main restricted universe multiverse
-# deb-src http://ports.ubuntu.com/ ${RELEASE} main restricted universe multiverse
-
-deb http://ports.ubuntu.com/ ${RELEASE}-updates main restricted universe multiverse
-# deb-src http://ports.ubuntu.com/ ${RELEASE}-updates main restricted universe multiverse
-
-deb http://ports.ubuntu.com/ ${RELEASE}-security main restricted universe multiverse
-# deb-src http://ports.ubuntu.com/ ${RELEASE}-security main restricted universe multiverse
-
-deb http://ports.ubuntu.com/ ${RELEASE}-backports main restricted universe multiverse
-# deb-src http://ports.ubuntu.com/ ${RELEASE}-backports main restricted universe multiverse
-EOM
-fi
 chroot $R apt-get update
 chroot $R apt-get -y -u dist-upgrade
 
@@ -134,9 +118,8 @@ EOM
 chroot $R adduser --gecos "Ubuntu user" --add_extra_groups --disabled-password ubuntu
 chroot $R usermod -a -G sudo,adm -p '$6$iTPEdlv4$HSmYhiw2FmvQfueq32X30NqsYKpGDoTAUV2mzmHEgP/1B7rV3vfsjZKnAWn6M2d.V2UsPuZ2nWHg1iqzIu/nF/' ubuntu
 
-# Restore standard sources.list if a local mirror was used
-if [ -n "$LOCAL_MIRROR" ]; then
-  cat <<EOM >$R/etc/apt/sources.list
+# Restore standard sources.list
+cat <<EOM >$R/etc/apt/sources.list
 deb http://ports.ubuntu.com/ ${RELEASE} main restricted universe multiverse
 # deb-src http://ports.ubuntu.com/ ${RELEASE} main restricted universe multiverse
 
@@ -150,7 +133,6 @@ deb http://ports.ubuntu.com/ ${RELEASE}-backports main restricted universe multi
 # deb-src http://ports.ubuntu.com/ ${RELEASE}-backports main restricted universe multiverse
 EOM
 chroot $R apt-get update
-fi
 
 # Clean cached downloads
 chroot $R apt-get clean
@@ -172,7 +154,7 @@ EOM
 
 # Set up firmware config
 cat <<EOM >$R/boot/firmware/config.txt
-# For more options and information see 
+# For more options and information see
 # http://www.raspberrypi.org/documentation/configuration/config-txt.md
 # Some settings may impact device functionality. See link above for details
 
