@@ -254,9 +254,11 @@ rm -f $R/etc/machine-id
 # Build the image file
 # Currently hardcoded to a 1.75GiB image
 DATE="$(date +%Y-%m-%d)"
-dd if=/dev/zero of="$BASEDIR/${DATE}-ubuntu-${RELEASE}.img" bs=1M count=1
-dd if=/dev/zero of="$BASEDIR/${DATE}-ubuntu-${RELEASE}.img" bs=1M count=0 seek=1792
-sfdisk -f "$BASEDIR/${DATE}-ubuntu-${RELEASE}.img" <<EOM
+IMAGE_BASE=$BASEDIR/${DATE}-ubuntu-${RELEASE}
+IMAGE_FILE=${IMAGE_BASE}.img
+dd if=/dev/zero of="$IMAGE_FILE" bs=1M count=1
+dd if=/dev/zero of="$IMAGE_FILE" bs=1M count=0 seek=1792
+sfdisk -f "$IMAGE_FILE" <<EOM
 unit: sectors
 
 1 : start=     2048, size=   131072, Id= c, bootable
@@ -264,22 +266,21 @@ unit: sectors
 3 : start=        0, size=        0, Id= 0
 4 : start=        0, size=        0, Id= 0
 EOM
-VFAT_LOOP="$(losetup -o 1M --sizelimit 64M -f --show $BASEDIR/${DATE}-ubuntu-${RELEASE}.img)"
-EXT4_LOOP="$(losetup -o 65M --sizelimit 1727M -f --show $BASEDIR/${DATE}-ubuntu-${RELEASE}.img)"
+VFAT_LOOP="$(losetup -o 1M --sizelimit 64M -f --show $IMAGE_FILE)"
+EXT4_LOOP="$(losetup -o 65M --sizelimit 1727M -f --show $IMAGE_FILE)"
 mkfs.vfat "$VFAT_LOOP"
 mkfs.ext4 "$EXT4_LOOP"
 MOUNTDIR="$BUILDDIR/mount"
+FIRMWARE="$MOUNTDIR/boot/firmware"
 mkdir -p "$MOUNTDIR"
 mount "$EXT4_LOOP" "$MOUNTDIR"
-mkdir -p "$MOUNTDIR/boot/firmware"
-mount "$VFAT_LOOP" "$MOUNTDIR/boot/firmware"
+mkdir -p "$FIRMWARE"
+mount "$VFAT_LOOP" "$FIRMWARE"
 rsync -a "$R/" "$MOUNTDIR/"
-umount "$MOUNTDIR/boot/firmware"
+umount "$FIRMWARE"
 umount "$MOUNTDIR"
 losetup -d "$EXT4_LOOP"
 losetup -d "$VFAT_LOOP"
-if which bmaptool; then
-  bmaptool create -o "$BASEDIR/${DATE}-ubuntu-${RELEASE}.bmap" "$BASEDIR/${DATE}-ubuntu-${RELEASE}.img"
-fi
+bmaptool create -o "${IMAGE_BASE}.bmap" "$IMAGE_FILE"
 
 # Done!
