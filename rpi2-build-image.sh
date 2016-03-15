@@ -93,7 +93,12 @@ chroot $R apt-add-repository -y ppa:fo0bar/rpi2
 chroot $R apt-get update
 
 # Standard packages
-chroot $R apt-get -y install ubuntu-standard initramfs-tools raspberrypi-bootloader-nokernel rpi2-ubuntu-errata language-pack-en
+chroot $R apt-get -y install ubuntu-standard \
+                             initramfs-tools \
+                             raspberrypi-bootloader-nokernel \
+                             rpi2-ubuntu-errata \
+                             language-pack-en \
+                             openssh-server
 
 # Kernel installation
 # Install flash-kernel last so it doesn't try (and fail) to detect the
@@ -244,6 +249,7 @@ rm -rf $R/tmp/*
 rm -f $R/var/lib/urandom/random-seed
 [ -L $R/var/lib/dbus/machine-id ] || rm -f $R/var/lib/dbus/machine-id
 rm -f $R/etc/machine-id
+# TODO - remove ssh host key?
 
 # Build the image file
 # Currently hardcoded to a 1.75GiB image
