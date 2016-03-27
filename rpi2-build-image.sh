@@ -115,8 +115,15 @@ ff02::2         ip6-allrouters
 EOM
 
 # Set up default user
-chroot $R adduser --gecos "Ubuntu user" --add_extra_groups --disabled-password ubuntu
-chroot $R usermod -a -G sudo,adm -p '$6$iTPEdlv4$HSmYhiw2FmvQfueq32X30NqsYKpGDoTAUV2mzmHEgP/1B7rV3vfsjZKnAWn6M2d.V2UsPuZ2nWHg1iqzIu/nF/' ubuntu
+USER=ubuntu
+SSH_DIR=/home/$USER/.ssh
+chroot $R adduser --gecos "Default user" --add_extra_groups --disabled-password $USER
+chroot $R usermod -a -G sudo,adm -p `mkpasswd -m sha-512 $USER` $USER
+echo "$USER ALL=(ALL) NOPASSWD:ALL" >$R/etc/sudoers.d/$USER
+ssh-keygen -t ecdsa -f $BASEDIR/$USER -N ""
+mkdir -p $R/$SSH_DIR
+mv $BASEDIR/$USER.pub ${R}${SSH_DIR}/authorized_keys
+chroot $R chown -R $USER $SSH_DIR
 
 # Restore standard sources.list
 cat <<EOM >$R/etc/apt/sources.list
