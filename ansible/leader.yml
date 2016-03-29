@@ -1,0 +1,57 @@
+---
+- hosts: leader
+  gather_facts: False
+  vars:
+    gateway: '{{ network | ipaddr(1) | ipaddr("address") }}'
+    dhcp_start: '{{ dhcp_range | ipaddr(1) | ipaddr("address") }}'
+    worker_count: '{{groups["workers"] | length}}'
+    dhcp_end: '{{ dhcp_range | ipaddr(worker_count) | ipaddr("address") }}'
+  tasks:
+    - name: Replace default interfaces file
+      copy: src=interfaces dest=/etc/network/interfaces
+    - name: Configure eth0 for cluster network
+      template: src=eth0.j2 dest=/etc/network/interfaces.d/eth0
+    - name: Configure eth1 for upstream DHCP network
+      copy: src=eth1 dest=/etc/network/interfaces.d/eth1
+
+    - name: Set hostname to {{inventory_hostname_short}}
+      hostname: name={{inventory_hostname_short}}
+    - name: Setup hosts file for nodes in cluster
+      template: src=hosts.j2 dest=/etc/hosts
+
+    - name: Install APT caching proxy
+      apt: pkg=apt-cacher-ng state=installed
+    - name: Setup APT operations to use caching proxy
+      template: src=00proxy.j2 dest=/etc/apt/apt.conf.d/00proxy
+
+    - name: Install DNS/DHCP service
+      apt: pkg=dnsmasq state=installed
+    - name: Configure dnsmasq
+      template: src=dnsmasq.j2 dest=/etc/dnsmasq.d/{{domain}}
+      notify:
+        - restart dnsmasq
+
+    - name: Seed debconf answers so that iptables-persistent can be installed
+      debconf: name=iptables-persistent question="{{item}}" value=false vtype=boolean
+      with_items:
+        - iptables-persistent/autosave_v4
+        - iptables-persistent/autosave_v6
+    - name: Install iptables persistence
+      apt: pkg=iptables-persistent state=installed
+    - name: Enable IP forwarding
+      sysctl: name=net.ipv4.ip_forward value=1 state=present
+    - name: Configure iptables
+      copy: src=rules.v4 dest=/etc/iptables/rules.v4
+      notify:
+        - restart iptables-persistent
+
+    - name: Install tmux
+      apt: pkg=tmux state=installed
+
+  handlers:
+    - name: restart dnsmasq
+      service: name=dnsmasq state=restarted
+      ignore_errors: True
+    - name: restart iptables-persistent
+      service: name=iptables-persistent state=restarted
+      ignore_errors: True

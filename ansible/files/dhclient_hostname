@@ -1,0 +1,14 @@
+#!/bin/sh
+if [ "$interface" != "eth0" ]; then
+    return
+fi
+
+if [ "$reason" != BOUND ] && [ "$reason" != RENEW ] \
+   && [ "$reason" != REBIND ] && [ "$reason" != REBOOT ]
+then
+    return
+fi
+
+echo $new_host_name > /etc/hostname
+hostname $new_host_name
+echo dhclient-exit-hooks.d/hostname: Dynamic Hostname = $new_host_name

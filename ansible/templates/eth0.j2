@@ -1,0 +1,8 @@
+allow-hotplug eth0
+iface eth0 inet static
+	address {{ gateway }}
+	gateway {{ gateway }}
+	netmask {{ network | ipaddr("netmask") }}
+	broadcast {{ network | ipaddr("broadcast") }}
+	network {{ network | ipaddr("network") }}
+	metric 1
