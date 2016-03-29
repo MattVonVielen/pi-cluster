@@ -123,6 +123,7 @@ echo "$USER ALL=(ALL) NOPASSWD:ALL" >$R/etc/sudoers.d/$USER
 ssh-keygen -t ecdsa -f $BASEDIR/$USER -N ""
 mkdir -p $R/$SSH_DIR
 mv $BASEDIR/$USER.pub ${R}${SSH_DIR}/authorized_keys
+mv $BASEDIR/$USER $PWD/cluster.pem
 chroot $R chown -R $USER $SSH_DIR
 
 # Restore standard sources.list
